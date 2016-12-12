@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">PedestrianDeadReckoning</string>
+    <string name="access_token">pk.eyJ1IjoiYnJvc3BhcnMiLCJhIjoiY2l3bHNwenR4MDAwazJvbnh1dGlxdHEzZyJ9.pn3zLCnyM-OUcyJ5zvpSrQ</string>
+    <string name="map_style">http://taha.inrialpes.fr/shs.json</string>
+    <string name="lat_start">45.19270982152921</string>
+    <string name="lon_start">5.773703679442406</string>
 </resources>

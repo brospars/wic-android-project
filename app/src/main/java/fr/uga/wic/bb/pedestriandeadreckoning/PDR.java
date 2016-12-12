@@ -3,7 +3,7 @@ package fr.uga.wic.bb.pedestriandeadreckoning;
 import android.hardware.SensorManager;
 
 /**
- * CreatestepSize by rosparsb on 28/11/16.
+ * Created by rosparsb on 28/11/16.
  */
 
 public class PDR {

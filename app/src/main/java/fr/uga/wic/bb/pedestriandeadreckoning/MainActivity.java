@@ -4,7 +4,18 @@ import android.content.Context;
 import android.hardware.SensorManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.mapbox.mapboxsdk.MapboxAccountManager;
+import com.mapbox.mapboxsdk.annotations.Marker;
+import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
+import com.mapbox.mapboxsdk.camera.CameraPosition;
+import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.mapbox.mapboxsdk.maps.MapView;
+import com.mapbox.mapboxsdk.maps.MapboxMap;
+import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -16,6 +27,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView latText;
     private TextView lonText;
 
+    private MapView mapView;
+
     private Podometre podometre;
     private Orientation orientation;
     private PDR pdr;
@@ -24,6 +37,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        final float latStart = Float.parseFloat(getString(R.string.lat_start));
+        final float lonStart = Float.parseFloat(getString(R.string.lon_start));
+
         pasText = (TextView)findViewById(R.id.pasText);
         yawText = (TextView)findViewById(R.id.yawText);
         pitchText = (TextView)findViewById(R.id.pitchText);
@@ -35,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
 
         podometre = new Podometre(senSensorManager);
         orientation = new Orientation(senSensorManager);
-        pdr = new PDR(senSensorManager, (float) 45.19270982152921, (float) 5.773703679442406);
+        pdr = new PDR(senSensorManager, latStart, lonStart);
 
         podometre.setPasListener(pasListener);
         orientation.setOrientationChangeListener(orientationListener);
@@ -43,18 +60,77 @@ public class MainActivity extends AppCompatActivity {
 
         latText.setText("Lat : "+pdr.getmCurrentLocation()[0]);
         lonText.setText("Lon : "+pdr.getmCurrentLocation()[1]);
+
+        // connect to Mapbox with access token
+        MapboxAccountManager.start(this, getString(R.string.access_token));
+
+        // Create a mapView
+        mapView = (MapView) findViewById(R.id.mapview);
+        mapView.onCreate(savedInstanceState);
+
+        // Add a MapboxMap
+        mapView.getMapAsync(new OnMapReadyCallback() {
+
+            MapboxMap mapboxMap;
+            Marker marker;
+
+            public void onMapReady(MapboxMap mapboxMap) {
+                this.mapboxMap = mapboxMap;
+
+                mapboxMap.setCameraPosition(new CameraPosition.Builder()
+                    .target(new LatLng(latStart, lonStart))
+                    .zoom(19)
+                    .build());
+
+                //marker = mapboxMap.addMarker(new MarkerViewOptions().position(new LatLng(latStart, lonStart)));
+
+                mapboxMap.setOnMapClickListener(new MapboxMap.OnMapClickListener() {
+                    public void onMapClick(LatLng point) {
+                        updateMarker(point);
+                    }
+                });
+            }
+
+            public void updateMarker(LatLng point){
+                if(marker == null){
+                    marker = mapboxMap.addMarker(new MarkerViewOptions().position(point));
+                }else {
+                    marker.setPosition(point);
+                }
+            }
+        });
     }
 
     protected void onPause() {
         super.onPause();
         podometre.onPause();
         orientation.onPause();
+        mapView.onPause();
     }
 
     protected void onResume() {
         super.onResume();
         podometre.onResume();
         orientation.onResume();
+        mapView.onResume();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        mapView.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        mapView.onLowMemory();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mapView.onDestroy();
     }
 
     private Podometre.PasListener pasListener = new Podometre.PasListener() {

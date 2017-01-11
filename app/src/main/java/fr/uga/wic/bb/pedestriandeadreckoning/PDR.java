@@ -62,7 +62,7 @@ public class PDR {
     private Podometre.PasListener pasListener = new Podometre.PasListener() {
         @Override
         public void onPasDetected(int nbPas) {
-            float [] newLocation = computeNextStep((float)1000000,orientation.getmOrientationVals()[0]);
+            float [] newLocation = computeNextStep((float)0.7,orientation.getmOrientationVals()[0]);
             pdrListener.onPasDetected(newLocation);
         }
     };

@@ -2,6 +2,7 @@ package fr.uga.wic.bb.pedestriandeadreckoning;
 
 import android.content.Context;
 import android.hardware.SensorManager;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -10,8 +11,11 @@ import android.widget.Toast;
 
 import com.mapbox.mapboxsdk.MapboxAccountManager;
 import com.mapbox.mapboxsdk.annotations.Marker;
+import com.mapbox.mapboxsdk.annotations.MarkerView;
 import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
+import com.mapbox.mapboxsdk.camera.CameraUpdate;
+import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
@@ -28,6 +32,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView lonText;
 
     private MapView mapView;
+    private static MapboxMap mapboxMap;
+    private static MarkerView marker;
 
     private Podometre podometre;
     private Orientation orientation;
@@ -71,32 +77,25 @@ public class MainActivity extends AppCompatActivity {
         // Add a MapboxMap
         mapView.getMapAsync(new OnMapReadyCallback() {
 
-            MapboxMap mapboxMap;
-            Marker marker;
-
             public void onMapReady(MapboxMap mapboxMap) {
-                this.mapboxMap = mapboxMap;
+                MainActivity.mapboxMap = mapboxMap;
+
+                LatLng latLng = new LatLng(latStart, lonStart);
 
                 mapboxMap.setCameraPosition(new CameraPosition.Builder()
-                    .target(new LatLng(latStart, lonStart))
+                    .target(latLng)
                     .zoom(19)
                     .build());
 
-                //marker = mapboxMap.addMarker(new MarkerViewOptions().position(new LatLng(latStart, lonStart)));
+                //HotFix : Adding marker here invisible because marker wasn't showing otherwise
+                marker = mapboxMap.addMarker(new MarkerViewOptions().position(latLng).title("position"));
+                marker.setVisible(false);
 
                 mapboxMap.setOnMapClickListener(new MapboxMap.OnMapClickListener() {
                     public void onMapClick(LatLng point) {
                         updateMarker(point);
                     }
                 });
-            }
-
-            public void updateMarker(LatLng point){
-                if(marker == null){
-                    marker = mapboxMap.addMarker(new MarkerViewOptions().position(point));
-                }else {
-                    marker.setPosition(point);
-                }
             }
         });
     }
@@ -161,6 +160,18 @@ public class MainActivity extends AppCompatActivity {
     private static double round (double value, int precision) {
         int scale = (int) Math.pow(10, precision);
         return (double) Math.round(value * scale) / scale;
+    }
+
+    public void updateMarker(LatLng point){
+        if(marker == null){
+            marker = mapboxMap.addMarker(new MarkerViewOptions().position(point).title("position"));
+            System.out.println("create marker");
+
+        }else {
+            marker.setPosition(point);
+            marker.setVisible(true);
+            System.out.println("update marker position");
+        }
     }
 
 

@@ -1,21 +1,20 @@
 package fr.uga.wic.bb.pedestriandeadreckoning;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.hardware.SensorManager;
-import android.support.annotation.NonNull;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.support.v7.widget.Toolbar;
+import android.view.View;
+import android.widget.Button;
 
 import com.mapbox.mapboxsdk.MapboxAccountManager;
-import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerView;
 import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
-import com.mapbox.mapboxsdk.camera.CameraUpdate;
-import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
@@ -24,19 +23,12 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 public class MainActivity extends AppCompatActivity {
 
     private SensorManager senSensorManager;
-    private TextView pasText;
-    private TextView yawText;
-    private TextView pitchText;
-    private TextView rollText;
-    private TextView latText;
-    private TextView lonText;
+    private SharedPreferences sharedPref;
 
     private MapView mapView;
     private static MapboxMap mapboxMap;
     private static MarkerView marker;
 
-    private Podometre podometre;
-    private Orientation orientation;
     private PDR pdr;
 
     @Override
@@ -44,28 +36,25 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Button settingsButton = (Button) findViewById(R.id.settings);
+        settingsButton.setOnClickListener( new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(MainActivity.this, SettingsActivity.class);
+                startActivity(i);
+            }
+        });
+
+
         final float latStart = Float.parseFloat(getString(R.string.lat_start));
         final float lonStart = Float.parseFloat(getString(R.string.lon_start));
 
-        pasText = (TextView)findViewById(R.id.pasText);
-        yawText = (TextView)findViewById(R.id.yawText);
-        pitchText = (TextView)findViewById(R.id.pitchText);
-        rollText = (TextView)findViewById(R.id.rollText);
-        latText = (TextView)findViewById(R.id.latText);
-        lonText = (TextView)findViewById(R.id.lonText);
-
         senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 
-        podometre = new Podometre(senSensorManager);
-        orientation = new Orientation(senSensorManager);
-        pdr = new PDR(senSensorManager, latStart, lonStart);
-
-        podometre.setPasListener(pasListener);
-        orientation.setOrientationChangeListener(orientationListener);
+        pdr = new PDR(senSensorManager, sharedPref, latStart, lonStart);
         pdr.setPasListener(pdrListener);
-
-        latText.setText("Lat : "+pdr.getmCurrentLocation()[0]);
-        lonText.setText("Lon : "+pdr.getmCurrentLocation()[1]);
 
         // connect to Mapbox with access token
         MapboxAccountManager.start(this, getString(R.string.access_token));
@@ -102,15 +91,11 @@ public class MainActivity extends AppCompatActivity {
 
     protected void onPause() {
         super.onPause();
-        podometre.onPause();
-        orientation.onPause();
         mapView.onPause();
     }
 
     protected void onResume() {
         super.onResume();
-        podometre.onResume();
-        orientation.onResume();
         mapView.onResume();
     }
 
@@ -132,28 +117,11 @@ public class MainActivity extends AppCompatActivity {
         mapView.onDestroy();
     }
 
-    private Podometre.PasListener pasListener = new Podometre.PasListener() {
-        @Override
-        public void onPasDetected(int nbPas) {
-            pasText.setText("Nombre pas : "+nbPas);
-        }
-    };
-
     private PDR.PDRListener pdrListener = new PDR.PDRListener() {
         @Override
         public void onPasDetected(float[] newLocation) {
-            latText.setText("Lat : "+newLocation[0]);
-            lonText.setText("Lon : "+newLocation[1]);
-        }
-    };
-
-    private Orientation.OrientationListener orientationListener = new Orientation.OrientationListener() {
-
-        @Override
-        public void onOrientationChange(float[] orientation) {
-            yawText.setText("Yaw : "+round(Math.toDegrees(orientation[0]),1)+"°");
-            pitchText.setText("Pitch : "+round(Math.toDegrees(orientation[1]),1)+"°");
-            rollText.setText("Roll : "+round(Math.toDegrees(orientation[2]),1)+"°");
+            LatLng newPos = new LatLng(newLocation[0],newLocation[1]);
+            marker.setPosition(newPos);
         }
     };
 
@@ -168,8 +136,9 @@ public class MainActivity extends AppCompatActivity {
             System.out.println("create marker");
 
         }else {
-            marker.setPosition(point);
             marker.setVisible(true);
+            marker.setPosition(point);
+            pdr.setmCurrentLocation(new float[]{(float) point.getLatitude(), (float) point.getLongitude()});
             System.out.println("update marker position");
         }
     }

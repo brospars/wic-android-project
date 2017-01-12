@@ -1,6 +1,8 @@
 package fr.uga.wic.bb.pedestriandeadreckoning;
 
+import android.content.SharedPreferences;
 import android.hardware.SensorManager;
+import android.preference.PreferenceManager;
 
 /**
  * Created by rosparsb on 28/11/16.
@@ -11,18 +13,20 @@ public class PDR {
     private float [] mCurrentLocation = new float[2];
 
     private SensorManager senSensorManager;
+    private SharedPreferences sharedPref;
     private Podometre podometre;
     private Orientation orientation;
 
     /*
     *   Constructor new PDR set original location and pass sensor manager
     */
-    public PDR(SensorManager sensorManager, float lat, float lon) {
+    public PDR(SensorManager sensorManager, SharedPreferences sharedPref, float lat, float lon) {
         this.senSensorManager = sensorManager;
+        this.sharedPref = sharedPref;
         this.mCurrentLocation[0] = lat;
         this.mCurrentLocation[1] = lon;
 
-        podometre = new Podometre(senSensorManager);
+        podometre = new Podometre(senSensorManager,sharedPref);
         orientation = new Orientation(senSensorManager);
 
         podometre.setPasListener(pasListener);
@@ -35,18 +39,23 @@ public class PDR {
 
     public void setmCurrentLocation(float [] mCurrentLocation) {
         this.mCurrentLocation = mCurrentLocation;
+        pdrListener.onPasDetected(mCurrentLocation);
     }
 
     public float [] computeNextStep(float stepSize, float bearing){
-        float R = 6371000;
-        float lat2 = (float) Math.asin( Math.sin(mCurrentLocation[0])*Math.cos(stepSize/R) +
-                Math.cos(mCurrentLocation[0])*Math.sin(stepSize/R)*Math.cos(bearing) );
-        float lon2 = (float) (mCurrentLocation[1] +
-                Math.atan2(Math.sin(bearing)*Math.sin(stepSize/R)*Math.cos(mCurrentLocation[0]),
-                        Math.cos(stepSize/R)-Math.sin(mCurrentLocation[0])*Math.sin(lat2)));
 
-        this.mCurrentLocation[0] = lat2;
-        this.mCurrentLocation[1] = lon2;
+        double orientation = bearing;
+        double lat = Math.toRadians(mCurrentLocation[0]);
+        double lon = Math.toRadians(mCurrentLocation[1]);
+
+
+
+        double R = 6371000;
+        double lat2 = Math.asin( Math.sin(lat)*Math.cos(stepSize/R) + Math.cos(lat)*Math.sin(stepSize/R)*Math.cos(orientation));
+        double lon2 = lon + Math.atan2(Math.sin(orientation)*Math.sin(stepSize/R)*Math.cos(lat), Math.cos(stepSize/R)-Math.sin(lat)*Math.sin(lat2));
+
+        this.mCurrentLocation[0] = (float) Math.toDegrees(lat2);
+        this.mCurrentLocation[1] = (float) Math.toDegrees(lon2);
 
         return this.mCurrentLocation;
     }
@@ -62,7 +71,8 @@ public class PDR {
     private Podometre.PasListener pasListener = new Podometre.PasListener() {
         @Override
         public void onPasDetected(int nbPas) {
-            float [] newLocation = computeNextStep((float)0.7,orientation.getmOrientationVals()[0]);
+            float stepSize = Float.parseFloat(sharedPref.getString("stepSize","0.7"));
+            float [] newLocation = computeNextStep(stepSize,orientation.getmOrientationVals()[0]);
             pdrListener.onPasDetected(newLocation);
         }
     };

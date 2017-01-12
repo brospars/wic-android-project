@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditTextPreference
+        android:title="Step size"
+        android:key="stepSize"
+        android:defaultValue="0.7"
+        android:inputType="numberDecimal"
+        android:summary="Your average step size"/>
+    <EditTextPreference
+        android:title="Step sensibility"
+        android:key="stepSensibility"
+        android:defaultValue="3"
+        android:inputType="numberDecimal"
+        android:summary="Adjust the step sensibility"/>
+</PreferenceScreen>

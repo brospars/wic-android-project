@@ -13,8 +13,8 @@ import android.opengl.Matrix;
 public class Orientation implements SensorEventListener {
 
     /*
-        * 0 : Yaw, 1 : Pitch, 2 : Roll
-        */
+    * 0 : Yaw, 1 : Pitch, 2 : Roll
+    */
     private float [] mOrientationVals = new float[3];
 
     private float [] mRotationMatrixMagnetic = new float[16];

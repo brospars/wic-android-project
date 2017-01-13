@@ -23,6 +23,9 @@ public class Podometre implements SensorEventListener {
     private double a;
 
 
+    /*
+    * Podometre constructor, init with sensor and shared preferences (acceleration threshold)
+     */
     public Podometre(SensorManager sensorManager, SharedPreferences sharedPref){
         this.senSensorManager = sensorManager;
         this.sharedPref = sharedPref;

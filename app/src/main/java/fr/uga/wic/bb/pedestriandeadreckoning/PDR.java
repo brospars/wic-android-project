@@ -37,11 +37,17 @@ public class PDR {
         return mCurrentLocation;
     }
 
+    /*
+    * set the current location of PDR user
+    */
     public void setmCurrentLocation(float [] mCurrentLocation) {
         this.mCurrentLocation = mCurrentLocation;
         pdrListener.onPasDetected(mCurrentLocation);
     }
 
+    /*
+    * compute the next location given the starting point, the stepSize and the orientation
+    */
     public float [] computeNextStep(float stepSize, float bearing){
 
         double orientation = bearing;
@@ -67,10 +73,10 @@ public class PDR {
     public void stop(){
 
     }
-
     private Podometre.PasListener pasListener = new Podometre.PasListener() {
         @Override
         public void onPasDetected(int nbPas) {
+            // compute next step given the step size in shared property
             float stepSize = Float.parseFloat(sharedPref.getString("stepSize","0.7"));
             float [] newLocation = computeNextStep(stepSize,orientation.getmOrientationVals()[0]);
             pdrListener.onPasDetected(newLocation);

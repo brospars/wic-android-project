@@ -20,15 +20,21 @@ import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 
+/*
+*  The main activity of the app
+*/
 public class MainActivity extends AppCompatActivity {
 
+    // shared objects
     private SensorManager senSensorManager;
     private SharedPreferences sharedPref;
 
+    // map objects
     private MapView mapView;
     private static MapboxMap mapboxMap;
     private static MarkerView marker;
 
+    // PedestrianDeadReckoning object
     private PDR pdr;
 
     @Override
@@ -36,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Add listener on the settings button to start the settings activity on click
         Button settingsButton = (Button) findViewById(R.id.settings);
         settingsButton.setOnClickListener( new View.OnClickListener() {
 
@@ -46,13 +53,15 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
+        // Starting point (used to center the map)
         final float latStart = Float.parseFloat(getString(R.string.lat_start));
         final float lonStart = Float.parseFloat(getString(R.string.lon_start));
 
+        // init shared object (sensor and preferences)
         senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         sharedPref = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 
+        //instanciate PDR with sensor, preferences and starting location
         pdr = new PDR(senSensorManager, sharedPref, latStart, lonStart);
         pdr.setPasListener(pdrListener);
 
@@ -71,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
 
                 LatLng latLng = new LatLng(latStart, lonStart);
 
+                // Set map position to starting point
                 mapboxMap.setCameraPosition(new CameraPosition.Builder()
                     .target(latLng)
                     .zoom(19)
@@ -80,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
                 marker = mapboxMap.addMarker(new MarkerViewOptions().position(latLng).title("position"));
                 marker.setVisible(false);
 
+                // On click the map update marker position
                 mapboxMap.setOnMapClickListener(new MapboxMap.OnMapClickListener() {
                     public void onMapClick(LatLng point) {
                         updateMarker(point);
@@ -117,6 +128,9 @@ public class MainActivity extends AppCompatActivity {
         mapView.onDestroy();
     }
 
+    /*
+    *   PDR event callback when user Step is detected move the marker position
+    */
     private PDR.PDRListener pdrListener = new PDR.PDRListener() {
         @Override
         public void onPasDetected(float[] newLocation) {
@@ -125,11 +139,18 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    /*
+    *   return double number value at given precision
+    */
     private static double round (double value, int precision) {
         int scale = (int) Math.pow(10, precision);
         return (double) Math.round(value * scale) / scale;
     }
 
+
+    /*
+    *   Init marker if not existant, set marker to clicked point
+    */
     public void updateMarker(LatLng point){
         if(marker == null){
             marker = mapboxMap.addMarker(new MarkerViewOptions().position(point).title("position"));
